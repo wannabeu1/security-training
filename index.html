@@ -4,10 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>정부기관 주관 해킹메일 훈련 안내</title>
+<script src="config.js"></script>
 <style>
 :root{--navy:#16324a;--blue:#0e6797;--red:#b12631;--bg:#f3f5f7;--card:#fff;--line:#dce3e8;--text:#25313c;--muted:#66727d}
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+body.registration-pending{overflow:hidden}
+.registration-gate{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:linear-gradient(145deg,#10283e,#174f70)}
+.registration-gate[hidden]{display:none}
+.registration-card{width:min(100%,460px);padding:30px;border-radius:20px;background:#fff;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.registration-mark{display:grid;place-items:center;width:52px;height:52px;margin-bottom:18px;border-radius:15px;background:#e9f3f8;color:var(--blue);font-size:25px;font-weight:900}
+.registration-card h1{margin:0 0 8px;color:var(--navy);font-size:28px;line-height:1.3}
+.registration-card p{margin:0;color:var(--muted)}
+.registration-card label{display:block;margin:22px 0 7px;font-weight:800;color:#263746}
+.registration-card input{width:100%;height:52px;padding:0 15px;border:1px solid #b9c6cf;border-radius:10px;background:#fff;color:var(--text);font:inherit;font-size:17px;outline:none}
+.registration-card input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(14,103,151,.14)}
+.registration-card button{width:100%;height:52px;margin-top:14px;border:0;border-radius:10px;background:var(--blue);color:#fff;font:inherit;font-weight:800;font-size:17px;cursor:pointer}
+.registration-card button:hover{background:#0a567f}
+.registration-card button:disabled{cursor:wait;opacity:.7}
+.privacy-note{margin-top:14px!important;padding:11px 12px;border-radius:8px;background:#f3f6f8;color:#63717b!important;font-size:13px;line-height:1.5}
+.form-message{min-height:24px;margin-top:9px!important;color:var(--red)!important;font-size:14px;font-weight:700}
+.training-content[hidden]{display:none}
 .wrap{width:min(920px,calc(100% - 28px));margin:28px auto 52px}
 .hero{border-radius:20px;padding:30px 28px;background:linear-gradient(135deg,#132b42,#1b618a);color:#fff;box-shadow:0 10px 28px rgba(0,0,0,.12)}
 .hero h1{margin:0 0 12px;font-size:clamp(28px,5vw,42px);line-height:1.2}
@@ -34,7 +51,23 @@ h2 .red{color:var(--red)}
 @media(max-width:640px){.wrap{width:min(100% - 18px,920px);margin-top:12px}.hero,.notice,.section{border-radius:14px;padding:20px}.step{grid-template-columns:40px 1fr;gap:8px 10px}.step-title,.step-text{grid-column:2}.num{font-size:40px}}
 </style>
 </head>
-<body>
+<body class="registration-pending">
+<section class="registration-gate" id="registrationGate" aria-labelledby="registrationTitle">
+<div class="registration-card">
+<div class="registration-mark" aria-hidden="true">✓</div>
+<h1 id="registrationTitle">복구 시스템 접속 확인</h1>
+<p>본인 확인을 위해 이름을 입력해 주세요.</p>
+<form id="registrationForm" autocomplete="off">
+<label for="employeeName">이름</label>
+<input id="employeeName" name="name" type="text" maxlength="50" autocomplete="name" placeholder="홍길동" required autofocus>
+<button id="submitButton" type="submit">접속하기</button>
+<p class="privacy-note">입력한 이름, 공인 IP와 접속 시각은 해킹메일 훈련 참여 확인 목적으로만 기록됩니다. 비밀번호나 인증번호는 입력하지 마세요.</p>
+<p class="form-message" id="formMessage" role="alert" aria-live="polite"></p>
+</form>
+</div>
+</section>
+
+<div class="training-content" id="trainingContent" hidden>
 <main class="wrap">
 <section class="hero">
 <h1>정부기관 주관 해킹메일 훈련 안내</h1>
@@ -112,5 +145,102 @@ h2 .red{color:var(--red)}
 
 <div class="footer">정부기관 주관 해외지사 임직원 대상 해킹훈련 안내</div>
 </main>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  const config = window.TRAINING_CONFIG || {};
+  const form = document.getElementById('registrationForm');
+  const gate = document.getElementById('registrationGate');
+  const content = document.getElementById('trainingContent');
+  const nameInput = document.getElementById('employeeName');
+  const submitButton = document.getElementById('submitButton');
+  const message = document.getElementById('formMessage');
+
+  function showTraining() {
+    gate.hidden = true;
+    content.hidden = false;
+    document.body.classList.remove('registration-pending');
+    window.scrollTo(0, 0);
+  }
+
+  async function getPublicIp() {
+    if (!config.ipLookupUrl) return '';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(function () { controller.abort(); }, 4000);
+
+    try {
+      const response = await fetch(config.ipLookupUrl, {
+        method: 'GET',
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      if (!response.ok) return '';
+
+      const data = await response.json();
+      return typeof data.ip === 'string' ? data.ip.slice(0, 64) : '';
+    } catch (error) {
+      return '';
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const employeeName = nameInput.value.trim().replace(/\s+/g, ' ');
+    if (employeeName.length < 2) {
+      message.textContent = '이름을 두 글자 이상 입력해 주세요.';
+      nameInput.focus();
+      return;
+    }
+
+    if (!config.collectorUrl || config.collectorUrl.includes('PASTE_')) {
+      message.textContent = '수집 시스템이 아직 설정되지 않았습니다. 보안 담당자에게 문의해 주세요.';
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = '접속 정보 확인 중...';
+    message.textContent = '';
+
+    const ipAddress = await getPublicIp();
+
+    const record = {
+      name: employeeName,
+      campaign: config.campaign || 'server-recovery-qr',
+      openedAt: new Date().toISOString(),
+      pageUrl: location.href,
+      referrer: document.referrer || '',
+      userAgent: navigator.userAgent,
+      language: navigator.language || '',
+      ipAddress: ipAddress
+    };
+
+    try {
+      await fetch(config.collectorUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        cache: 'no-store',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify(record)
+      });
+      sessionStorage.setItem('securityTrainingRegistered', 'true');
+      showTraining();
+    } catch (error) {
+      message.textContent = '접속 확인에 실패했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.';
+      submitButton.disabled = false;
+      submitButton.textContent = '접속하기';
+    }
+  });
+
+  if (sessionStorage.getItem('securityTrainingRegistered') === 'true') {
+    showTraining();
+  }
+}());
+</script>
 </body>
 </html>
