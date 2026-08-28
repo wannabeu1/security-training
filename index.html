@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>정부기관 주관 해킹메일 훈련 안내</title>
+<title>해외지사 모바일 VPN 시스템 접속권한 신청</title>
 <script src="config.js"></script>
 <style>
 :root{--navy:#16324a;--blue:#0e6797;--red:#b12631;--bg:#f3f5f7;--card:#fff;--line:#dce3e8;--text:#25313c;--muted:#66727d}
@@ -58,14 +58,14 @@ h2 .red{color:var(--red)}
 <section class="registration-gate" id="registrationGate" aria-labelledby="registrationTitle">
 <div class="registration-card">
 <div class="registration-mark" aria-hidden="true">✓</div>
-<h1 id="registrationTitle">복구 시스템 접속 확인</h1>
-<p>접속 정보는 자동으로 기록됩니다. 이름 입력은 선택사항입니다.</p>
+<h1 id="registrationTitle">해외지사 모바일 VPN 시스템<br>접속권한 신청</h1>
+<p>사번과 성명을 입력해 신청을 진행해 주세요.</p>
 <form id="registrationForm" autocomplete="off">
-<label for="employeeName">이름 <small>(선택)</small></label>
-<input id="employeeName" name="name" type="text" maxlength="50" autocomplete="name" placeholder="홍길동" autofocus>
-<button id="submitButton" type="submit">이름 입력 후 안내 보기</button>
-<button id="skipButton" type="button">이름 없이 안내 보기</button>
-<p class="privacy-note">접속 시각, 공인 IP, 브라우저 정보는 페이지 접속 시 자동 기록됩니다. 이름은 선택 입력입니다. 비밀번호나 인증번호는 입력하지 마세요.</p>
+<label for="employeeId">사번</label>
+<input id="employeeId" name="employeeId" type="text" maxlength="30" autocomplete="off" placeholder="사번 입력" autofocus>
+<label for="employeeName">성명</label>
+<input id="employeeName" name="name" type="text" maxlength="50" autocomplete="name" placeholder="성명 입력">
+<button id="submitButton" type="submit">신청 진행</button>
 <p class="form-message" id="formMessage" role="alert" aria-live="polite"></p>
 </form>
 </div>
@@ -161,9 +161,9 @@ h2 .red{color:var(--red)}
   const form = document.getElementById('registrationForm');
   const gate = document.getElementById('registrationGate');
   const content = document.getElementById('trainingContent');
+  const employeeIdInput = document.getElementById('employeeId');
   const nameInput = document.getElementById('employeeName');
   const submitButton = document.getElementById('submitButton');
-  const skipButton = document.getElementById('skipButton');
   const message = document.getElementById('formMessage');
 
   function showTraining() {
@@ -196,7 +196,7 @@ h2 .red{color:var(--red)}
     }
   }
 
-  async function sendRecord(employeeName, eventType) {
+  async function sendRecord(employeeId, employeeName, eventType) {
     if (!config.collectorUrl || config.collectorUrl.includes('PASTE_')) {
       return false;
     }
@@ -204,6 +204,7 @@ h2 .red{color:var(--red)}
     const ipAddress = await getPublicIp();
 
     const record = {
+      employeeId: employeeId,
       name: employeeName,
       eventType: eventType,
       campaign: config.campaign || 'server-recovery-qr',
@@ -231,7 +232,7 @@ h2 .red{color:var(--red)}
 
   function recordInitialAccess() {
     if (sessionStorage.getItem('securityTrainingAccessLogged') === 'true') return;
-    sendRecord('', 'page_open').then(function (recorded) {
+    sendRecord('', '', 'page_open').then(function (recorded) {
       if (recorded) sessionStorage.setItem('securityTrainingAccessLogged', 'true');
     });
   }
@@ -239,10 +240,11 @@ h2 .red{color:var(--red)}
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
 
+    const employeeId = employeeIdInput.value.trim().replace(/\s+/g, ' ');
     const employeeName = nameInput.value.trim().replace(/\s+/g, ' ');
-    if (employeeName.length === 1) {
-      message.textContent = '이름을 입력하는 경우 두 글자 이상 입력해 주세요.';
-      nameInput.focus();
+    if (employeeId.length < 2 || employeeName.length < 2) {
+      message.textContent = '사번과 성명을 각각 두 글자 이상 입력해 주세요.';
+      (employeeId.length < 2 ? employeeIdInput : nameInput).focus();
       return;
     }
 
@@ -250,14 +252,10 @@ h2 .red{color:var(--red)}
     submitButton.textContent = '안내를 여는 중...';
     message.textContent = '';
 
-    if (employeeName.length >= 2) {
-      await sendRecord(employeeName, 'name_submitted');
-    }
+    await sendRecord(employeeId, employeeName, 'identity_submitted');
 
     showTraining();
   });
-
-  skipButton.addEventListener('click', showTraining);
 
   recordInitialAccess();
 

@@ -1,7 +1,8 @@
 const SHEET_NAME = '접속기록';
 const HEADERS = [
-  '서버 기록시각',
-  '입력 이름',
+  '한국시간 기록시각',
+  '입력 사번(마스킹)',
+  '입력 성명(마스킹)',
   '기록 유형',
   '캠페인',
   '브라우저 기록시각',
@@ -18,7 +19,8 @@ function doPost(e) {
   try {
     lock.waitLock(10000);
     const data = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    const name = cleanText_(data.name, 50);
+    const employeeId = maskValue_(data.employeeId, 30);
+    const name = maskValue_(data.name, 50);
 
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = spreadsheet.getSheetByName(SHEET_NAME);
@@ -33,7 +35,8 @@ function doPost(e) {
     }
 
     sheet.appendRow([
-      new Date(),
+      Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'),
+      employeeId,
       name,
       cleanText_(data.eventType, 30),
       cleanText_(data.campaign, 100),
@@ -62,6 +65,12 @@ function doGet() {
 
 function cleanText_(value, maxLength) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, maxLength);
+}
+
+function maskValue_(value, maxLength) {
+  const text = cleanText_(value, maxLength);
+  if (text.length <= 2) return text;
+  return text.slice(0, 2) + '*'.repeat(text.length - 2);
 }
 
 // 스프레드시트 수식 삽입을 막기 위해 위험한 첫 문자를 이스케이프합니다.
