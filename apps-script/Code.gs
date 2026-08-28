@@ -2,6 +2,7 @@ const SHEET_NAME = '접속기록';
 const HEADERS = [
   '서버 기록시각',
   '입력 이름',
+  '기록 유형',
   '캠페인',
   '브라우저 기록시각',
   '페이지 URL',
@@ -19,10 +20,6 @@ function doPost(e) {
     const data = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const name = cleanText_(data.name, 50);
 
-    if (name.length < 2) {
-      return jsonResponse_({ok: false, error: 'invalid_name'});
-    }
-
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = spreadsheet.getSheetByName(SHEET_NAME);
     if (!sheet) {
@@ -38,6 +35,7 @@ function doPost(e) {
     sheet.appendRow([
       new Date(),
       name,
+      cleanText_(data.eventType, 30),
       cleanText_(data.campaign, 100),
       cleanText_(data.openedAt, 40),
       safeCell_(data.pageUrl, 500),

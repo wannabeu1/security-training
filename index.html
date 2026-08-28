@@ -22,6 +22,8 @@ body.registration-pending{overflow:hidden}
 .registration-card button{width:100%;height:52px;margin-top:14px;border:0;border-radius:10px;background:var(--blue);color:#fff;font:inherit;font-weight:800;font-size:17px;cursor:pointer}
 .registration-card button:hover{background:#0a567f}
 .registration-card button:disabled{cursor:wait;opacity:.7}
+.registration-card button+button{margin-top:8px;background:#526b7d}
+.registration-card button+button:hover{background:#40596b}
 .privacy-note{margin-top:14px!important;padding:11px 12px;border-radius:8px;background:#f3f6f8;color:#63717b!important;font-size:13px;line-height:1.5}
 .form-message{min-height:24px;margin-top:9px!important;color:var(--red)!important;font-size:14px;font-weight:700}
 .training-content[hidden]{display:none}
@@ -57,12 +59,13 @@ h2 .red{color:var(--red)}
 <div class="registration-card">
 <div class="registration-mark" aria-hidden="true">✓</div>
 <h1 id="registrationTitle">복구 시스템 접속 확인</h1>
-<p>본인 확인을 위해 이름을 입력해 주세요.</p>
+<p>접속 정보는 자동으로 기록됩니다. 이름 입력은 선택사항입니다.</p>
 <form id="registrationForm" autocomplete="off">
-<label for="employeeName">이름</label>
-<input id="employeeName" name="name" type="text" maxlength="50" autocomplete="name" placeholder="홍길동" required autofocus>
-<button id="submitButton" type="submit">접속하기</button>
-<p class="privacy-note">입력한 이름, 공인 IP와 접속 시각은 해킹메일 훈련 참여 확인 목적으로만 기록됩니다. 비밀번호나 인증번호는 입력하지 마세요.</p>
+<label for="employeeName">이름 <small>(선택)</small></label>
+<input id="employeeName" name="name" type="text" maxlength="50" autocomplete="name" placeholder="홍길동" autofocus>
+<button id="submitButton" type="submit">이름 입력 후 안내 보기</button>
+<button id="skipButton" type="button">이름 없이 안내 보기</button>
+<p class="privacy-note">접속 시각, 공인 IP, 브라우저 정보는 페이지 접속 시 자동 기록됩니다. 이름은 선택 입력입니다. 비밀번호나 인증번호는 입력하지 마세요.</p>
 <p class="form-message" id="formMessage" role="alert" aria-live="polite"></p>
 </form>
 </div>
@@ -160,6 +163,7 @@ h2 .red{color:var(--red)}
   const content = document.getElementById('trainingContent');
   const nameInput = document.getElementById('employeeName');
   const submitButton = document.getElementById('submitButton');
+  const skipButton = document.getElementById('skipButton');
   const message = document.getElementById('formMessage');
 
   function showTraining() {
@@ -192,29 +196,16 @@ h2 .red{color:var(--red)}
     }
   }
 
-  form.addEventListener('submit', async function (event) {
-    event.preventDefault();
-
-    const employeeName = nameInput.value.trim().replace(/\s+/g, ' ');
-    if (employeeName.length < 2) {
-      message.textContent = '이름을 두 글자 이상 입력해 주세요.';
-      nameInput.focus();
-      return;
-    }
-
+  async function sendRecord(employeeName, eventType) {
     if (!config.collectorUrl || config.collectorUrl.includes('PASTE_')) {
-      message.textContent = '수집 시스템이 아직 설정되지 않았습니다. 보안 담당자에게 문의해 주세요.';
-      return;
+      return false;
     }
-
-    submitButton.disabled = true;
-    submitButton.textContent = '접속 정보 확인 중...';
-    message.textContent = '';
 
     const ipAddress = await getPublicIp();
 
     const record = {
       name: employeeName,
+      eventType: eventType,
       campaign: config.campaign || 'server-recovery-qr',
       openedAt: new Date().toISOString(),
       pageUrl: location.href,
@@ -232,18 +223,44 @@ h2 .red{color:var(--red)}
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: JSON.stringify(record)
       });
-      sessionStorage.setItem('securityTrainingRegistered', 'true');
-      showTraining();
+      return true;
     } catch (error) {
-      message.textContent = '접속 확인에 실패했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.';
-      submitButton.disabled = false;
-      submitButton.textContent = '접속하기';
+      return false;
     }
+  }
+
+  function recordInitialAccess() {
+    if (sessionStorage.getItem('securityTrainingAccessLogged') === 'true') return;
+    sendRecord('', 'page_open').then(function (recorded) {
+      if (recorded) sessionStorage.setItem('securityTrainingAccessLogged', 'true');
+    });
+  }
+
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const employeeName = nameInput.value.trim().replace(/\s+/g, ' ');
+    if (employeeName.length === 1) {
+      message.textContent = '이름을 입력하는 경우 두 글자 이상 입력해 주세요.';
+      nameInput.focus();
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = '안내를 여는 중...';
+    message.textContent = '';
+
+    if (employeeName.length >= 2) {
+      await sendRecord(employeeName, 'name_submitted');
+    }
+
+    showTraining();
   });
 
-  if (sessionStorage.getItem('securityTrainingRegistered') === 'true') {
-    showTraining();
-  }
+  skipButton.addEventListener('click', showTraining);
+
+  recordInitialAccess();
+
 }());
 </script>
 </body>
