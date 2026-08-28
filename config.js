@@ -3,6 +3,6 @@ window.TRAINING_CONFIG = {
   collectorUrl: 'https://script.google.com/macros/s/AKfycbwebLjfGpgA3y4walIGdi0aiJXIq1dGfTGWR0iLW45W6iuniAHzxY758SvrcY4jGBle/exec',
   // 공인 IPv4/IPv6 조회 주소입니다. 사내 IP 조회 API가 있다면 해당 주소로 교체하세요.
   // IP 수집을 원하지 않으면 빈 문자열로 설정할 수 있습니다.
-  ipLookupUrl: 'https://api64.ipify.org?format=json',
+  ipLookupUrl: 'https://ipwho.is/',
   campaign: 'server-recovery-qr-2026-01'
 };

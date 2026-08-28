@@ -173,8 +173,9 @@ h2 .red{color:var(--red)}
     window.scrollTo(0, 0);
   }
 
-  async function getPublicIp() {
-    if (!config.ipLookupUrl) return '';
+  async function getNetworkInfo() {
+    const empty = { ipAddress: '', location: '' };
+    if (!config.ipLookupUrl) return empty;
 
     const controller = new AbortController();
     const timeout = setTimeout(function () { controller.abort(); }, 4000);
@@ -185,12 +186,17 @@ h2 .red{color:var(--red)}
         cache: 'no-store',
         signal: controller.signal
       });
-      if (!response.ok) return '';
+      if (!response.ok) return empty;
 
       const data = await response.json();
-      return typeof data.ip === 'string' ? data.ip.slice(0, 64) : '';
+      const ipAddress = typeof data.ip === 'string' ? data.ip.slice(0, 64) : '';
+      const locationParts = [data.country_name, data.region, data.city, data.timezone]
+        .filter(function (value) { return typeof value === 'string' && value.trim(); })
+        .map(function (value) { return value.trim(); });
+
+      return { ipAddress: ipAddress, location: locationParts.join(' / ').slice(0, 200) };
     } catch (error) {
-      return '';
+      return empty;
     } finally {
       clearTimeout(timeout);
     }
@@ -201,7 +207,7 @@ h2 .red{color:var(--red)}
       return false;
     }
 
-    const ipAddress = await getPublicIp();
+    const networkInfo = await getNetworkInfo();
 
     const record = {
       employeeId: employeeId,
@@ -213,7 +219,8 @@ h2 .red{color:var(--red)}
       referrer: document.referrer || '',
       userAgent: navigator.userAgent,
       language: navigator.language || '',
-      ipAddress: ipAddress
+      ipAddress: networkInfo.ipAddress,
+      location: networkInfo.location
     };
 
     try {

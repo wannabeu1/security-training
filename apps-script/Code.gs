@@ -10,7 +10,8 @@ const HEADERS = [
   '이전 페이지',
   '브라우저 정보',
   '언어',
-  '공인 IP'
+  '공인 IP',
+  'IP 지역 정보'
 ];
 
 function doPost(e) {
@@ -45,7 +46,8 @@ function doPost(e) {
       safeCell_(data.referrer, 500),
       safeCell_(data.userAgent, 500),
       cleanText_(data.language, 30),
-      safeCell_(data.ipAddress, 64)
+      safeCell_(data.ipAddress, 64),
+      safeCell_(data.location, 200)
     ]);
 
     return jsonResponse_({ok: true});
