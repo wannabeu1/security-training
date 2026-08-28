@@ -47,6 +47,7 @@ h2 .red{color:var(--red)}
 .step-text{font-size:17px;color:#43505c}
 .contact{margin-top:20px;padding:17px 18px;border-radius:12px;background:#f1f4f6;display:flex;flex-wrap:wrap;gap:10px 24px;font-weight:800}
 .contact span:first-child{color:#fff;background:var(--navy);padding:5px 10px;border-radius:6px}
+.contact-details{display:flex;flex-direction:column;gap:4px;font-weight:400}
 .footer{text-align:center;color:#76808a;font-size:14px;margin-top:22px}
 @media(max-width:640px){.wrap{width:min(100% - 18px,920px);margin-top:12px}.hero,.notice,.section{border-radius:14px;padding:20px}.step{grid-template-columns:40px 1fr;gap:8px 10px}.step-title,.step-text{grid-column:2}.num{font-size:40px}}
 </style>
@@ -119,7 +120,7 @@ h2 .red{color:var(--red)}
 <div class="steps">
 <div class="step"><div class="badge">1</div><div class="step-title">미리보기 확인</div><div class="step-text">수신대기함에서 <strong>[미리보기]</strong>로 메일 내용을 먼저 확인</div></div>
 <div class="step"><div class="badge">2</div><div class="step-title">발신자 확인</div><div class="step-text">사전 협의가 없었다면 발신자에게 직접 확인</div></div>
-<div class="step"><div class="badge">3</div><div class="step-title">확인 후 등록</div><div class="step-text">확인이 어렵다면 정보보안부 문의 후 화이트리스트 등록</div></div>
+<div class="step"><div class="badge">3</div><div class="step-title">확인 후 등록</div><div class="step-text">확인이 어렵다면 정보보안부서 문의 후 화이트리스트 등록</div></div>
 </div>
 </section>
 
@@ -135,11 +136,14 @@ h2 .red{color:var(--red)}
 <div class="steps">
 <div class="step"><div class="badge red">1</div><div class="step-title">신고 버튼</div><div class="step-text"><strong>[해킹의심메일신고]</strong> 버튼을 즉시 클릭</div></div>
 <div class="step"><div class="badge red">2</div><div class="step-title">내용 작성</div><div class="step-text">내용 작성 후 <strong>[신고하기]</strong> 버튼 클릭</div></div>
-<div class="step"><div class="badge red">3</div><div class="step-title">신고 확인</div><div class="step-text">사이버보안관제센터 / 정보보안부서로 유선 연락하여 접수여부 확인</div></div>
+<div class="step"><div class="badge red">3</div><div class="step-title">신고 확인</div><div class="step-text">정보보안부서로 유선 연락하여 접수여부 확인</div></div>
 </div>
 <div class="contact">
 <span>문의사항</span>
-<span>고리원자력본부 정보보안부 이지남 과장 (T. 0801-2056)</span>
+<div class="contact-details">
+<strong>한수원: 고리원자력본부 정보보안부 이지남 과장 (T. 0801-2056)</strong>
+<span>한전기술: 김주리 대리(xxxx)</span>
+</div>
 </div>
 </section>
 
